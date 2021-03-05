@@ -16,7 +16,7 @@ import time
 
 
 __version__ = '0.1.3'
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(sys.argv[0])
 
 
 def main():
@@ -29,7 +29,7 @@ def main():
 
 def parse_args():
     """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(prog=__file__)
+    parser = argparse.ArgumentParser(prog=sys.argv[0])
 
     def readable_filename(string):
         try:

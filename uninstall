@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+
+# assert we are root
+if [ ! "$UID" == "0" ]
+then
+    echo "Must be root"
+    exit 1
+fi
+
+# delete script
+if [ -f /usr/local/bin/fastread ]
+then
+    rm -f /usr/local/bin/fastread
+    echo "fastread successfully uninstalled."
+else
+    echo "fastread is not installed."
+    exit 1
+fi

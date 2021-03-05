@@ -2,9 +2,9 @@
 
 
 # assert we are root
-if [ ! "$UID" = "0" ]
+if ! [ "$(id -u)" = "0" ]
 then
-    echo "Must be root"
+    echo "must be root"
     exit 1
 fi
 

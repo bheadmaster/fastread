@@ -14,16 +14,13 @@ import sys
 import time
 
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 logger = logging.getLogger(__file__)
 
 
 def main():
     """ entrypoint """
     args = parse_args()
-    if args.version:
-        print(__version__)
-        sys.exit()
     logging.basicConfig(level=logging.INFO)
     wordbuf = WordBuffer(args.filename)
     curses.wrapper(FastRead(args.wpm, wordbuf).run)

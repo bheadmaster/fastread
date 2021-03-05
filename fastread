@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""
+# fastread #
+
+Simple CLI application for plaintext speedreading.
+"""
+
+import argparse
+import curses
+import enum
+import logging
+import signal
+import sys
+import time
+
+
+__version__ = '0.1.0'
+logger = logging.getLogger(__file__)
+
+
+def main():
+    """ entrypoint """
+    args = parse_args()
+    if args.version:
+        print(__version__)
+        sys.exit()
+    logging.basicConfig(level=logging.INFO)
+    wordbuf = WordBuffer(args.filename)
+    curses.wrapper(FastRead(args.wpm, wordbuf).run)
+
+
+def parse_args():
+    """ Parse command-line arguments """
+    parser = argparse.ArgumentParser(prog=__file__)
+    parser.add_argument('filename', help='Input filename (default: stdin)')
+    parser.add_argument('-w', '--wpm', default=400,
+                                       type=int,
+                                       help='Words-per-minute reading speed')
+    parser.add_argument('--version', action='version',
+                                     version=__version__)
+    return parser.parse_args()
+
+
+class WordBuffer:
+    """ Simple word buffer with backwards seeking """
+    def __init__(self, filename):
+        with open(filename) as input_file:
+            self.words = self.flatten(map(str.split,
+                                          input_file.read()
+                                                    .split('\n')))
+            print(self.words, file=sys.stderr)
+        self.idx = 0
+
+    def flatten(self, _list):
+        """ Return flat list from nested while keeping order """
+        # base case - _list is str
+        if isinstance(_list, str):
+            return [_list]
+
+        # recursive step - _list is list
+        _output_list = []
+        for _item_sublist in map(self.flatten, _list):
+            _output_list.extend(_item_sublist)
+        return _output_list
+
+    def next(self):
+        """ Get next word """
+        self.idx = min(self.idx + 1, len(self.words) - 1)
+        return self.words[self.idx]
+
+    def prev(self):
+        """ Get previous word """
+        self.idx = max(self.idx - 1, 0)
+        return self.words[self.idx]
+
+
+class FastRead:
+    """ FastRead engine """
+    def __init__(self, wpm, wordbuf):
+        self.wpm = wpm
+        self.timeout = None
+        self.pause = False
+        self.reverse = False
+        self.stdscr = None
+        self.wordbuf = wordbuf
+        self._raw_user_inputs = set(map(lambda item: item.value, UserInput))
+
+    def run(self, stdscr):
+        """ Initialize ncurses and start FastReader loop """
+        curses.start_color()
+        curses.use_default_colors()
+        curses.init_pair(1, curses.COLOR_RED, -1)
+        curses.noecho()
+        curses.cbreak()
+        curses.curs_set(False)
+
+        self.stdscr = stdscr
+        self.update_timeout()
+
+        user_input = UserInput.NONE
+
+        while True:
+            word = self.wordbuf.next() if not self.reverse else self.wordbuf.prev()
+
+            if word:
+                self.update(word)
+                if word[-1] in '!?.:,':
+                    time.sleep(self.timeout / 2)
+
+            user_input = self.get_input()
+
+            if user_input == UserInput.INCREASE:
+                self.wpm += 25
+            elif user_input == UserInput.DECREASE:
+                self.wpm -= 25
+            elif user_input == UserInput.PAUSE:
+                self.pause = not self.pause
+            elif user_input == UserInput.QUIT:
+                break
+
+            self.update_timeout()
+
+    def update_timeout(self):
+        """ Update timeout from value of wpm """
+        if self.timeout != (60 / self.wpm):
+            if self.pause or self.wpm == 0:
+                self.timeout = -1
+            elif self.wpm > 0:
+                self.reverse = False
+                self.timeout = (60 / self.wpm)
+            elif self.wpm < 0:
+                self.reverse = True
+                self.timeout = (60 / (-self.wpm))
+            self.stdscr.timeout(int(1000 * self.timeout))
+
+    def update(self, word):
+        """ Update screen with new word """
+        self.stdscr.clear()
+        max_row, max_col = self.stdscr.getmaxyx()
+        row, col = max_row // 2, (max_col - len(word)) // 2
+
+        red_idx = (len(word) - 1) // 2
+        try:
+            self.stdscr.addstr(row, col, word[:red_idx])
+            self.stdscr.addstr(row, col+red_idx, word[red_idx], curses.color_pair(1))
+            self.stdscr.addstr(row, col+red_idx+1, word[red_idx+1:])
+        except Exception as exc:
+            raise ValueError((word, red_idx).__repr__()) from exc
+
+        self.stdscr.refresh()
+
+    def get_input(self):
+        """ Wait for key with timeout """
+        start_time = time.monotonic()
+        raw_user_input = self.stdscr.getch()
+        end_time = time.monotonic()
+        if (end_time - start_time) < self.timeout:
+            time.sleep(self.timeout - (end_time - start_time))
+        if raw_user_input in self._raw_user_inputs:
+            return UserInput(raw_user_input)
+        return UserInput.NONE
+
+
+class UserInput(enum.Enum):
+    """ User input enumeration """
+    INCREASE = ord(']')
+    DECREASE = ord('[')
+    PAUSE = ord(' ')
+    QUIT = ord('q')
+    NONE = None
+
+
+def signal_handler(*args, **kwargs):
+    """ Treat SIGTERM as KeyboardInterrupt """
+    raise KeyboardInterrupt
+signal.signal(signal.SIGTERM, signal_handler)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.info('Exit on KeyboardInterrupt...')

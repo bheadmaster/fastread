@@ -9,12 +9,13 @@ import argparse
 import curses
 import enum
 import logging
+import os
 import signal
 import sys
 import time
 
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 logger = logging.getLogger(__file__)
 
 
@@ -29,10 +30,20 @@ def main():
 def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser(prog=__file__)
-    parser.add_argument('filename', help='Input filename (default: stdin)')
+
+    def readable_filename(string):
+        try:
+            open(string).close()
+        except OSError as exc:
+            raise argparse.ArgumentTypeError(exc)
+
+    parser.add_argument('filename', type=readable_filename,
+                                    metavar='FILENAME',
+                                    help='Input filename (default: stdin)')
     parser.add_argument('-w', '--wpm', default=400,
                                        type=int,
-                                       help='Words-per-minute reading speed')
+                                       metavar='WPM',
+                                       help='set reading speed (in wpm)')
     parser.add_argument('--version', action='version',
                                      version=__version__)
     return parser.parse_args()

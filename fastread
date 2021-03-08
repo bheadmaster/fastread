@@ -176,7 +176,7 @@ class FastRead:
         max_row, max_col = self.stdscr.getmaxyx()
         row, col = max_row // 2, (max_col - len(word)) // 2
 
-        red_idx = (len(word) - 1) // 2
+        red_idx = (len(word) - 1) // 2 if max_col % 2 == 0 else len(word) // 2
         finished, total = self.wordbuf.progress()
         PRECISION = 5
         percentage = int((10**PRECISION)*(finished / total)) / (10**PRECISION)

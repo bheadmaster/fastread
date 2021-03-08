@@ -133,7 +133,6 @@ class FastRead:
                 word = self.wordbuf.next() if self.wpm > 0 else self.wordbuf.prev()
                 self._last_input_time = time.monotonic()
                 self._time_buffer = 0.0
-                
 
                 if timeout and word[-1] in '\'":,':
                     self._time_buffer -= 0.5

@@ -235,3 +235,4 @@ if __name__ == '__main__':
         print('To continue, use the `-s {}` flag'.format(_word_number),
               file=sys.stderr)
         print('Exit on KeyboardInterrupt...', file=sys.stderr)
+        sys.exit(0)

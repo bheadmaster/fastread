@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument('filename', type=readable_filename,
                                     metavar='FILENAME',
                                     help='Input filename (default: stdin)')
-    parser.add_argument('-w', '--wpm', default=400,
+    parser.add_argument('-w', '--wpm', default=500,
                                        type=int,
                                        metavar='WPM',
                                        help='set reading speed (in wpm)')

@@ -96,7 +96,7 @@ class FastRead:
         self.wordbuf = wordbuf
 
         self._timeout = None
-        self._paused = False
+        self._paused = True
         self._last_input_time = time.monotonic()
         self._time_buffer = 0.0
         self._raw_input_values = set(map(lambda x: x.value, UserInput))
@@ -186,7 +186,8 @@ class FastRead:
                                                                  percentage))
 
         if self._paused:
-            self.stdscr.addstr(4, 3, '[PAUSED]', curses.color_pair(1))
+            self.stdscr.addstr(4, 3, '[PAUSED] -- press space to unpause',
+                                     curses.color_pair(1))
 
         self.stdscr.addstr(row-1, col+red_idx, 'V', curses.color_pair(1))
         self.stdscr.addstr(row, col, word[:red_idx])

@@ -16,6 +16,7 @@ import time
 
 __version__ = '0.2.2'
 prog = os.path.basename(sys.argv[0])
+_word_number = None
 
 
 def main():
@@ -56,11 +57,12 @@ def parse_args():
 class WordBuffer:
     """ Simple word buffer with backwards seeking """
     def __init__(self, filename, skip=0):
+        global _word_number
         with open(filename) as input_file:
             self.words = self._flatten(map(str.split,
                                            input_file.read()
                                                      .split('\n')))
-        self.idx = skip
+        self.idx = _word_number = skip
 
     def _flatten(self, _list):
         """ Return flat list from nested while keeping order """
@@ -80,12 +82,16 @@ class WordBuffer:
 
     def next(self):
         """ Get next word """
+        global _word_number
         self.idx = min(self.idx + 1, len(self.words) - 1)
+        _word_number = self.idx
         return self.words[self.idx]
 
     def prev(self):
         """ Get previous word """
+        global _word_number
         self.idx = max(self.idx - 1, 0)
+        _word_number = self.idx
         return self.words[self.idx]
 
 
@@ -225,4 +231,7 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
+        print('Stopped on {}. word'.format(_word_number), file=sys.stderr)
+        print('To continue, use the `-s {}` flag'.format(_word_number),
+              file=sys.stderr)
         print('Exit on KeyboardInterrupt...', file=sys.stderr)

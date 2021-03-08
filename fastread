@@ -116,9 +116,11 @@ class FastRead:
         self._last_input = time.monotonic()
         user_input = UserInput.NONE
 
-        word = '[ERROR]'
+        word = self.wordbuf.prev()
 
         while True:
+            self.update(word)
+
             timeout = abs((60 / self.wpm) * (1 - self._time_buffer)) \
                       if self.wpm and not self._paused \
                       else None
@@ -160,8 +162,6 @@ class FastRead:
                     word = self.wordbuf.prev()
             elif user_input == UserInput.QUIT:
                 break
-
-            self.update(word)
 
     def set_timeout(self, timeout):
         """ Update timeout from value of wpm """

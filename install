@@ -8,6 +8,13 @@ then
     exit 1
 fi
 
+# assert we have python3 installed
+if ! [ "$(python3 -c "print('ok')")" = "ok" ]
+then
+    echo "python3 not installed"
+    exit 1
+fi
+
 # go to script dir
 script_path="$(readlink -f "$0")"
 script_dir="${script_path%/*}"

@@ -169,10 +169,11 @@ class FastRead:
                 self._last_input_time = time.monotonic()
                 self._time_buffer = 0.0
 
-                if timeout and word[-1] in '\'":,':
-                    self._time_buffer -= 0.5
-                elif timeout and word[-1] in '!?.':
-                    self._time_buffer -= 1.
+                if timeout:
+                    if word[-1] in '!?.;:':
+                        self._time_buffer -= 1.
+                    elif not word[-1].isalpha():
+                        self._time_buffer -= 0.5
 
             elif timeout:
                 elapsed = (input_time - self._last_input_time)

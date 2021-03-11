@@ -49,7 +49,8 @@ def parse_args():
                                          help='Turn on debug logs')
     parser.add_argument('-c', '--chunk', default=40,
                                          type=int,
-                                         help='Set bottom text chunk size')
+                                         metavar='N',
+                                         help='Set chunk size to N words')
     parser.add_argument('-w', '--wpm', default=500,
                                        type=int,
                                        metavar='WPM',

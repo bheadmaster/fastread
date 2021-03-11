@@ -44,7 +44,7 @@ def parse_args():
 
     parser.add_argument('filename', type=readable_filename,
                                     metavar='FILENAME',
-                                    help='Input filename (default: stdin)')
+                                    help='Input filename')
     parser.add_argument('-d', '--debug', action='store_true',
                                          help='Turn on debug logs')
     parser.add_argument('-c', '--chunk', default=40,

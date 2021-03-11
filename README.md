@@ -6,7 +6,7 @@ Simple CLI tool for fast-reading.
     usage: fastread [-h] [-d] [-c N] [-w WPM] [-s N] [--version] FILENAME
 
     positional arguments:
-      FILENAME           Input filename (default: stdin)
+      FILENAME           Input filename
 
     optional arguments:
       -h, --help         show this help message and exit

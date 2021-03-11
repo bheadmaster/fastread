@@ -15,7 +15,7 @@ import sys
 import time
 import traceback
 
-__version__ = '0.2.5'
+__version__ = '0.3.0'
 prog = os.path.basename(sys.argv[0])
 _word_number = None
 _debug = False

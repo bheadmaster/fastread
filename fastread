@@ -96,14 +96,12 @@ class WordBuffer:
         Returns tuple `(list, idx)`, where `list` contains the word chunk
         with current word in it at the index `idx`.
         """
-        start_idx = max([0] + [(2 * i * self.chunk_size // 3)
-                               for i in range(len(self.words) // self.chunk_size)
-                               if (2 * i * self.chunk_size // 3) < self.idx - (self.chunk_size // 5)])
+        start_idx = max([0] + [i * (2 * self.chunk_size // 3)
+                               for i in range((3 * len(self.words)) // (2 * self.chunk_size))
+                               if i * (2 * self.chunk_size // 3) < self.idx - (self.chunk_size // 6)])
         end_idx = min(len(self.words), start_idx + self.chunk_size)
-        # with open('logfile', 'a') as logfile: logfile.write(f'{start_idx=}, {end_idx=}\n')
         word_list = self.words[start_idx:end_idx]
         word_idx = self.idx - start_idx
-        # with open('logfile', 'a') as logfile: logfile.write(f'{word_list=}\n')
         return (word_list, word_idx)
 
     def next(self):

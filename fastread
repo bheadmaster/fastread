@@ -86,6 +86,17 @@ class WordBuffer:
         """ Return tuple (finished, total) """
         return self.idx, len(self.words)
 
+    def chunk(self, n):
+        """
+        Returns tuple `(list, idx)`, where `list` contains chunk of `n` words
+        with current word in it at the index `idx`.
+        """
+        start_idx = max(0, self.idx - n // 2)
+        end_idx = min(len(self.words) - 1, start_idx + n)
+        word_list = self.words[start_idx:end_idx]
+        word_idx = self.idx - start_idx
+        return (word_list, word_idx)
+
     def next(self):
         """ Get next word """
         global _word_number
@@ -131,7 +142,8 @@ class FastRead:
         word = self.wordbuf.prev()
 
         while True:
-            self.update(word)
+            word_list, word_idx = self.wordbuf.chunk(25)
+            self.update(word, word_list, word_idx)
 
             timeout = abs((60 / self.wpm) * (1 - self._time_buffer)) \
                       if self.wpm and not self._paused \
@@ -181,7 +193,7 @@ class FastRead:
             self._timeout = int(1000 * timeout) if timeout else -1
             self.stdscr.timeout(self._timeout)
 
-    def update(self, word):
+    def update(self, word, word_list, word_idx):
         """ Update screen with new word """
         self.stdscr.clear()
         max_row, max_col = self.stdscr.getmaxyx()
@@ -205,6 +217,40 @@ class FastRead:
         self.stdscr.addstr(row, col, word[:red_idx])
         self.stdscr.addstr(row, col+red_idx, word[red_idx], curses.color_pair(1))
         self.stdscr.addstr(row, col+red_idx+1, word[red_idx+1:])
+
+        # split word_list into rows of at most max_col - 4 size
+        sentence_rows = []
+        sentence_row = []
+        for word in word_list:
+            new_sentence_row = sentence_row + [word]
+            if len(' '.join(new_sentence_row)) > max_col - 4:
+                sentence_rows.append(sentence_row)
+                sentence_row = [word]
+            else:
+                sentence_row = new_sentence_row
+        if sentence_row:
+            sentence_rows.append(sentence_row)
+
+        # check for invalid rows
+        if all(sentence_rows):
+            start_row = max_row - len(sentence_rows) - 4
+            start_col = 2
+
+            for idx, word in enumerate(word_list):
+                if start_col + len(word) > max_col - 2:
+                    start_row += 1
+                    start_col = 2
+                if idx == word_idx:
+                    # print red
+                    self.stdscr.addstr(start_row,
+                                       start_col,
+                                       word,
+                                       curses.color_pair(1))
+                else:
+                    self.stdscr.addstr(start_row,
+                                       start_col,
+                                       word)
+                start_col += len(word) + 1
 
         self.stdscr.refresh()
 

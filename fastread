@@ -26,7 +26,7 @@ def main():
     global _debug
     args = parse_args()
     _debug = args.debug
-    wordbuf = WordBuffer(args.filename, args.skip)
+    wordbuf = WordBuffer(args.filename, args.skip, args.chunk)
     curses.wrapper(FastRead(args.wpm, wordbuf).run)
 
 
@@ -47,6 +47,9 @@ def parse_args():
                                     help='Input filename (default: stdin)')
     parser.add_argument('-d', '--debug', action='store_true',
                                          help='Turn on debug logs')
+    parser.add_argument('-c', '--chunk', default=40,
+                                         type=int,
+                                         help='Set bottom text chunk size')
     parser.add_argument('-w', '--wpm', default=500,
                                        type=int,
                                        metavar='WPM',
@@ -62,13 +65,14 @@ def parse_args():
 
 class WordBuffer:
     """ Simple word buffer with backwards seeking """
-    def __init__(self, filename, skip=0):
+    def __init__(self, filename, skip, chunk_size):
         global _word_number
         with open(filename) as input_file:
             self.words = self._flatten(map(str.split,
                                            input_file.read()
                                                      .split('\n')))
         self.idx = _word_number = skip
+        self.chunk_size = chunk_size
 
     def _flatten(self, _list):
         """ Return flat list from nested while keeping order """
@@ -86,15 +90,19 @@ class WordBuffer:
         """ Return tuple (finished, total) """
         return self.idx, len(self.words)
 
-    def chunk(self, n):
+    def chunk(self):
         """
-        Returns tuple `(list, idx)`, where `list` contains chunk of `n` words
+        Returns tuple `(list, idx)`, where `list` contains the word chunk
         with current word in it at the index `idx`.
         """
-        start_idx = max(0, self.idx - n // 2)
-        end_idx = min(len(self.words) - 1, start_idx + n)
+        start_idx = max([0] + [(2 * i * self.chunk_size // 3)
+                               for i in range(len(self.words) // self.chunk_size)
+                               if (2 * i * self.chunk_size // 3) < self.idx - (self.chunk_size // 5)])
+        end_idx = min(len(self.words), start_idx + self.chunk_size)
+        # with open('logfile', 'a') as logfile: logfile.write(f'{start_idx=}, {end_idx=}\n')
         word_list = self.words[start_idx:end_idx]
         word_idx = self.idx - start_idx
+        # with open('logfile', 'a') as logfile: logfile.write(f'{word_list=}\n')
         return (word_list, word_idx)
 
     def next(self):
@@ -142,7 +150,7 @@ class FastRead:
         word = self.wordbuf.prev()
 
         while True:
-            word_list, word_idx = self.wordbuf.chunk(25)
+            word_list, word_idx = self.wordbuf.chunk()
             self.update(word, word_list, word_idx)
 
             timeout = abs((60 / self.wpm) * (1 - self._time_buffer)) \

@@ -243,7 +243,7 @@ class FastRead:
 
         # check for invalid rows
         if all(sentence_rows):
-            start_row = max_row - len(sentence_rows) - 4
+            start_row = max_row - len(sentence_rows) - 2
             start_col = 2
 
             for idx, word in enumerate(word_list):
